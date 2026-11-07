@@ -2,9 +2,11 @@
 """
 MCP PowerShell pour Claude - serveur + interface de configuration tout-en-un.
 
-Double-clic (ou `python mcp_powershell_claude.py`)      -> ouvre l'interface graphique.
-`python mcp_powershell_claude.py --mcp-server`           -> lancé automatiquement par Claude (serveur MCP, stdio).
-`python mcp_powershell_claude.py --tray`                 -> démarre caché dans la barre des tâches (utilisé au démarrage de Windows).
+Fonctionne en script Python (`python mcp_powershell_claude.py`) ou compilé en .exe (PyInstaller) :
+
+Double-clic (ou lancement sans argument)  -> ouvre l'interface graphique.
+`--mcp-server`                            -> lancé automatiquement par Claude (serveur MCP, stdio).
+`--tray`                                  -> démarre caché dans la barre des tâches (utilisé au démarrage de Windows).
 """
 
 import json
@@ -19,9 +21,17 @@ from tkinter import ttk, filedialog, messagebox
 APP_NAME = "ClaudePowerShellMCP"
 CONFIG_DIR = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), APP_NAME)
 CONFIG_PATH = os.path.join(CONFIG_DIR, "config.json")
-SCRIPT_PATH = os.path.abspath(__file__)
+IS_FROZEN = getattr(sys, "frozen", False)
+SCRIPT_PATH = sys.executable if IS_FROZEN else os.path.abspath(__file__)
 STARTUP_REG_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
 STARTUP_VALUE_NAME = "ClaudePowerShellMCP"
+
+
+def launch_command(*extra_args):
+    """Commande à utiliser pour relancer ce programme (exe autonome ou script .py)."""
+    if IS_FROZEN:
+        return [sys.executable, *extra_args]
+    return [sys.executable, SCRIPT_PATH, *extra_args]
 
 DEFAULT_BLOCKED_PATTERNS = [
     r"Remove-Item.*-Recurse.*-Force",
@@ -241,10 +251,11 @@ def install_to_claude(server_name="powershell-local"):
         except (json.JSONDecodeError, OSError):
             data = {}
 
+    cmd = launch_command("--mcp-server")
     data.setdefault("mcpServers", {})
     data["mcpServers"][server_name] = {
-        "command": sys.executable,
-        "args": [SCRIPT_PATH, "--mcp-server"],
+        "command": cmd[0],
+        "args": cmd[1:],
     }
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -295,10 +306,12 @@ def set_startup(enabled):
         return
     import winreg
 
-    pythonw = os.path.join(os.path.dirname(sys.executable), "pythonw.exe")
-    if not os.path.exists(pythonw):
-        pythonw = sys.executable
-    command = f'"{pythonw}" "{SCRIPT_PATH}" --tray'
+    if IS_FROZEN:
+        cmd = [sys.executable, "--tray"]
+    else:
+        pythonw = os.path.join(os.path.dirname(sys.executable), "pythonw.exe")
+        cmd = [pythonw if os.path.exists(pythonw) else sys.executable, SCRIPT_PATH, "--tray"]
+    command = " ".join(f'"{part}"' for part in cmd)
 
     with winreg.OpenKey(winreg.HKEY_CURRENT_USER, STARTUP_REG_KEY, 0, winreg.KEY_SET_VALUE) as key:
         if enabled:

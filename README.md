@@ -6,8 +6,18 @@ commande) pour configurer les dossiers autorisés, les commandes bloquées/autor
 dans Claude, et le démarrage automatique avec Windows.
 
 Tout est contenu dans **un seul fichier** : [`mcp_powershell_claude.py`](mcp_powershell_claude.py).
+Une **version .exe** prête à l'emploi (compilée avec PyInstaller, le moteur utilisé par
+auto-py-to-exe) est aussi disponible : [`ClaudePowerShellMCP-exe.zip`](ClaudePowerShellMCP-exe.zip).
 
-## Installation (pour non-développeurs)
+## Installation la plus simple : version .exe (sans Python)
+
+1. Téléchargez [`ClaudePowerShellMCP-exe.zip`](ClaudePowerShellMCP-exe.zip) et extrayez-le
+   entièrement dans un dossier (ne déplacez pas seulement le `.exe`, il a besoin des fichiers
+   du dossier `_internal` à côté de lui).
+2. Double-cliquez sur `ClaudePowerShellMCP.exe`. La fenêtre de configuration s'ouvre.
+3. Continuez à partir de l'étape 4 ci-dessous ("Dossiers autorisés").
+
+## Installation (version Python, pour non-développeurs)
 
 1. **Installer Python** (si ce n'est pas déjà fait) : https://www.python.org/downloads/
    Pendant l'installation, cochez **"Add python.exe to PATH"**.
